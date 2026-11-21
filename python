@@ -1,0 +1,305 @@
+import csv
+import os
+import numpy as np
+import pandas as pd
+
+FILE_NAME = "patients.csv"
+
+DEPARTMENTS = (
+    "General", "Cardiology", "Orthopedics",
+    "Dermatology", "Pediatrics", "ENT"
+)
+
+FIELDNAMES = [
+    "patient_id", "name", "age",
+    "gender", "department", "doctor", "fees"
+]
+
+
+def load_patients():
+    if not os.path.exists(FILE_NAME):
+        with open(FILE_NAME, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+            writer.writeheader()
+
+    with open(FILE_NAME, "r", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def save_patients(patients):
+    with open(FILE_NAME, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(patients)
+
+
+def add_patient():
+    patients = load_patients()
+    patient_id = input("Enter Patient ID: ")
+
+    existing_ids = {p["patient_id"] for p in patients}
+
+    if patient_id in existing_ids:
+        print("Patient ID already exists!")
+        return
+
+    name = input("Enter Name: ")
+    age = input("Enter Age: ")
+    gender = input("Enter Gender: ")
+    department = input("Enter Department: ")
+    doctor = input("Enter Doctor Name: ")
+    fees = input("Enter Fees: ")
+
+    if not patient_id or not name or not age.isdigit() or not fees.isdigit():
+        print("Invalid input!")
+        return
+
+    patients.append({
+        "patient_id": patient_id,
+        "name": name,
+        "age": age,
+        "gender": gender,
+        "department": department,
+        "doctor": doctor,
+        "fees": fees
+    })
+
+    save_patients(patients)
+    print("Patient added successfully!")
+
+
+def display_patients():
+    patients = load_patients()
+    if not patients:
+        print("No records found!")
+        return
+
+    for p in patients:
+        print(p)
+
+
+def search_patient():
+    patients = load_patients()
+    patient_id = input("Enter Patient ID: ")
+
+    for p in patients:
+        if p["patient_id"] == patient_id:
+            print("Patient Found:", p)
+            return
+
+    print("Patient not found!")
+
+
+def update_patient():
+    patients = load_patients()
+    patient_id = input("Enter Patient ID: ")
+
+    for p in patients:
+        if p["patient_id"] == patient_id:
+            name = input("Enter new name (blank to keep old): ")
+            age = input("Enter new age (blank to keep old): ")
+
+            if name:
+                p["name"] = name
+            if age.isdigit():
+                p["age"] = age
+
+            save_patients(patients)
+            print("Patient updated successfully!")
+            return
+
+    print("Patient not found!")
+
+
+def delete_patient():
+    patients = load_patients()
+    patient_id = input("Enter Patient ID: ")
+
+    updated = [p for p in patients if p["patient_id"] != patient_id]
+
+    if len(updated) == len(patients):
+        print("Patient not found!")
+    else:
+        save_patients(updated)
+        print("Patient deleted successfully!")
+
+
+def create_dataset():
+    patients = load_patients()
+
+    if len(patients) >= 50:
+        return
+
+    names = [
+        "Aarav", "Priya", "Rahul", "Ananya", "Rohit",
+        "Sneha", "Aman", "Neha", "Karan", "Riya"
+    ]
+
+    departments = [
+        "General", "Cardiology", "Orthopedics",
+        "Dermatology", "Pediatrics", "ENT"
+    ]
+
+    doctors = [
+        "Dr. Sharma", "Dr. Verma", "Dr. Gupta",
+        "Dr. Singh", "Dr. Kumar"
+    ]
+
+    existing_ids = {p["patient_id"] for p in patients}
+    i = 0
+
+    while len(patients) < 50:
+        patient_id = str(1001 + i)
+
+        if patient_id not in existing_ids:
+            patients.append({
+                "patient_id": patient_id,
+                "name": names[i % len(names)],
+                "age": str(18 + (i % 50)),
+                "gender": "Male" if i % 2 == 0 else "Female",
+                "department": departments[i % len(departments)],
+                "doctor": doctors[i % len(doctors)],
+                "fees": str(500 + (i % 5) * 200)
+            })
+            existing_ids.add(patient_id)
+
+        i += 1
+
+    save_patients(patients)
+    print("50 sample patient records created!")
+
+
+def run_analysis():
+    print("\n========== PATIENT DATA ANALYSIS ==========")
+
+    df = pd.read_csv(FILE_NAME)
+
+    if df.empty:
+        print("No patient records available!")
+        return
+
+    df["age"] = pd.to_numeric(df["age"], errors="coerce")
+    df["fees"] = pd.to_numeric(df["fees"], errors="coerce")
+
+    df["age"] = df["age"].fillna(df["age"].median())
+    df["fees"] = df["fees"].fillna(0)
+
+    print("\n1. First 5 Patient Records:")
+    print(df.head())
+
+    print("\n2. Selected Columns:")
+    print(df[["name", "age", "department"]])
+
+    print("\n3. Patients Older Than 40:")
+    print(df[df["age"] > 40])
+
+    print("\n4. Patients Sorted by Age:")
+    print(df.sort_values(by="age"))
+
+    print("\n5. Department Wise Patient Count:")
+    print(df.groupby("department")["patient_id"].count())
+
+    print("\n6. Statistical Analysis:")
+    print(df[["age", "fees"]].describe())
+
+    ages = np.array(df["age"])
+
+    print("\n7. NumPy 1D Array:")
+    print(ages)
+
+    sample_array = np.array([
+        [10, 20, 30],
+        [40, 50, 60]
+    ])
+
+    print("\n8. NumPy 2D Array:")
+    print(sample_array)
+
+    print("\n9. Array Indexing:")
+    print(ages[0])
+
+    print("\n10. Array Slicing:")
+    print(ages[0:5])
+
+    print("\n11. Sum of Ages:", np.sum(ages))
+    print("12. Average Age:", np.mean(ages))
+    print("13. Maximum Age:", np.max(ages))
+    print("14. Minimum Age:", np.min(ages))
+    print("15. Standard Deviation:", np.std(ages))
+
+    print("\n========== ANALYSIS COMPLETED ==========")
+
+
+def generate_report():
+    df = pd.read_csv(FILE_NAME)
+
+    print("\n================================")
+    print("     HOSPITAL SUMMARY REPORT")
+    print("================================")
+
+    if df.empty:
+        print("No patient records available!")
+        return
+
+    df["age"] = pd.to_numeric(df["age"], errors="coerce")
+    df["fees"] = pd.to_numeric(df["fees"], errors="coerce").fillna(0)
+
+    print("\nTotal Patients:", len(df))
+    print("Average Patient Age:", round(df["age"].mean(), 2))
+    print("Total Fees Collected: Rs.", df["fees"].sum())
+    print("Maximum Patient Age:", df["age"].max())
+    print("Minimum Patient Age:", df["age"].min())
+
+    print("\nDepartment-wise Patient Count:")
+    print(df.groupby("department")["patient_id"].count())
+
+    print("\nDepartment-wise Fees:")
+    print(df.groupby("department")["fees"].sum())
+
+    print("\n================================")
+    print("    REPORT GENERATED SUCCESSFULLY")
+    print("================================")
+
+
+def main():
+    create_dataset()
+
+    while True:
+        print("\n================================")
+        print("   HOSPITAL MANAGEMENT SYSTEM")
+        print("================================")
+        print("1. Add Patient")
+        print("2. Display Patients")
+        print("3. Search Patient")
+        print("4. Update Patient")
+        print("5. Delete Patient")
+        print("6. Data Analysis")
+        print("7. Generate Summary Report")
+        print("0. Exit")
+
+        choice = input("\nEnter your choice: ")
+
+        if choice == "1":
+            add_patient()
+        elif choice == "2":
+            display_patients()
+        elif choice == "3":
+            search_patient()
+        elif choice == "4":
+            update_patient()
+        elif choice == "5":
+            delete_patient()
+        elif choice == "6":
+            run_analysis()
+        elif choice == "7":
+            generate_report()
+        elif choice == "0":
+            print("Thank you for using Hospital Management System!")
+            break
+        else:
+            print("Invalid choice! Please try again.")
+
+
+if __name__ == "__main__":
+    main()
+    
